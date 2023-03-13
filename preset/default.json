@@ -124,7 +124,7 @@
         "visible": true
     },
     "seams_fix_type": {
-        "value": 1,
+        "value": 0,
         "visible": true
     },
     "seams_fix_denoise": {
