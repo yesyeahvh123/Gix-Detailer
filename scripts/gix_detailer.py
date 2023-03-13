@@ -636,19 +636,15 @@ def refresh_interrogators() -> List[str]:
     }
 
     # load deepdanbooru project
-    os.makedirs(
-        getattr(shared.cmd_opts, 'deepdanbooru_projects_path', default_ddp_path),
-        exist_ok=True
-    )
+    if hasattr(shared.cmd_opts, 'deepdanbooru_projects_path'):
+        os.makedirs( getattr(shared.cmd_opts, 'deepdanbooru_projects_path', default_ddp_path), exist_ok=True )
 
-    for path in os.scandir(shared.cmd_opts.deepdanbooru_projects_path):
-        if not path.is_dir():
-            continue
-
-        if not Path(path, 'project.json').is_file():
-            continue
-
-        interrogators[path.name] = DeepDanbooruInterrogator(path.name, path)
+        for path in os.scandir(shared.cmd_opts.deepdanbooru_projects_path):
+            if not path.is_dir():
+                continue
+            if not Path(path, 'project.json').is_file():
+                continue
+            interrogators[path.name] = DeepDanbooruInterrogator(path.name, path)
 
     return sorted(interrogators.keys())
 
@@ -948,7 +944,7 @@ class GIDRedraw():
         image_sliced = image.crop(rect)
         if self.use_partial_prompt == True:
             p.prompt = self.tagger.GetPartialPrompts( image_sliced, prompt_original )            
-        
+
         #if self.redraw_full_res:
             #p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
             #p.height = math.ceil((self.tile_height+self.padding) / 64) * 64
