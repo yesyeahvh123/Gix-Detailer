@@ -1005,6 +1005,8 @@ class GIDRedraw():
             if self.show_redraw_steps:
                 for img in reversed(processed.images):
                     result_images.insert(0, img)
+        gc.collect()
+        devices.torch_gc()
         return image
         
 
@@ -1022,7 +1024,7 @@ class GIDRedraw():
                 if state.interrupted:
                     break                               
                 image = self.draw_partial( image, draw, mask, xi, yi, p , prompt_original, result_images )
-        
+                
         p.width = image.width
         p.height = image.height
         #self.initial_info = processed.infotext(p, 0)
@@ -1835,8 +1837,13 @@ class Script(scripts.Script):
                 if (len(processed_org.images) > 0):
                     init_img = processed_org.images[0]
                 p2 = copy.copy(org_p) #Copy All setting from original setting
+            
+            gc.collect()
+            devices.torch_gc()
             #E. Run t2i or i2i by default ==================================================
 
+            gc.collect()
+            devices.torch_gc()
             if state.interrupted:
                     break
             
@@ -1849,11 +1856,7 @@ class Script(scripts.Script):
                 p2.width = math.ceil((init_img.width * custom_scale) / 64) * 64
                 p2.height = math.ceil((init_img.height * custom_scale) / 64) * 64
 
-            
-            if hasattr(p2 , "control_net_enabled"):
-                print(f"control_net_enabled={p2.control_net_enabled}")
-
-            # Upscaling
+            # S. Upscaling=============================================================
             state.job = "Upscaling"
             upscaler = GIDUpscaler(p2, init_img, upscaler_name, tile_width, tile_height)
             #Add upscaled image to list
@@ -1866,6 +1869,10 @@ class Script(scripts.Script):
             if save_image_upscale:
                 upscaler.save_image( processed_org.infotext(org_p, 0), suffix="(upscale)" )
             
+            gc.collect()
+            devices.torch_gc()
+            # E. Upscaling=============================================================
+
             redraw_mode_enum = GIDMode(redraw_mode)
             upscaler.setup_redraw(redraw_mode_enum, redraw_full_res, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
                                   use_partial_prompt, tagger)
@@ -1924,6 +1931,9 @@ class Script(scripts.Script):
                 
                 if disable_controlnet_during_detailup:
                     sc_controlnet_idx, sc_controlnet = self.RestoreAlwaysOnScript( p_hires_fix, sc_controlnet_idx, sc_controlnet )
+                
+                gc.collect()
+                devices.torch_gc()
             #E. Hires. Fix===============================
             if state.interrupted:
                 break
@@ -2068,6 +2078,9 @@ class Script(scripts.Script):
                                 f"seed : {p_dd.seed} , subseed : {p_dd.subseed}, steps : {p_dd.steps}, cfg : {p_dd.cfg_scale}  \n" + \
                                 f"Prompt={p_dd.prompt}"
                             logs_dd.append(s_log)
+
+                            gc.collect()
+                            devices.torch_gc()
                         if (gen_count > 0):                            
                             dd_image = processed_dd.images[0]
                     else:
@@ -2143,6 +2156,9 @@ class Script(scripts.Script):
                                 f"seed : {p_dd.seed} , subseed : {p_dd.subseed}, steps : {p_dd.steps}, cfg : {p_dd.cfg_scale}  \n" + \
                                 f"Prompt={p_dd.prompt}"
                             logs_dd.append(s_log)
+
+                            gc.collect()
+                            devices.torch_gc()
                         if (gen_count > 0):
                             dd_image = processed_dd.images[0]                        
                     else: 
