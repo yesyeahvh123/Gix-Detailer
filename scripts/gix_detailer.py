@@ -816,13 +816,18 @@ class GIDUpscaler():
             self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
             return
         
-        upscaler = list(filter(lambda u: u.name == self.upscaler_name, shared.sd_upscalers))[0]        
-        # Get list with scale factors
-        self.get_factors()                
-        # Upscaling image over all factors
-        for index, value in self.scales:            
-            #print(f"Upscaling iteration {index+1} with scale factor {value}")                        
-            self.image = upscaler.scaler.upscale(self.image, value, upscaler.data_path)
+        arr_upscales = list(filter(lambda u: u.name == self.upscaler_name, shared.sd_upscalers))
+        upscaler = arr_upscales[0] if len(arr_upscales) > 0 else None
+        if upscaler is None:
+            print(f"Upscaler named '{self.upscaler_name}' not found.")
+            self.upscaler_name = "None"
+        else:
+            # Get list with scale factors
+            self.get_factors()                
+            # Upscaling image over all factors
+            for index, value in self.scales:            
+                #print(f"Upscaling iteration {index+1} with scale factor {value}")                        
+                self.image = upscaler.scaler.upscale(self.image, value, upscaler.data_path)
         # Resize image to set values
         self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
 
