@@ -1,0 +1,226 @@
+{
+    "disable_controlnet_during_detailup": {
+        "value": true,
+        "visible": true
+    },
+    "show_redraw_steps": {
+        "value": false,
+        "visible": true
+    },
+    "target_size_type": {
+        "value": 2,
+        "visible": true
+    },
+    "custom_width": {
+        "value": 2048,
+        "visible": false
+    },
+    "custom_height": {
+        "value": 2048,
+        "visible": false
+    },
+    "custom_scale": {
+        "value": 2,
+        "visible": true
+    },
+    "upscaler_name": {
+        "value": "R-ESRGAN 4x+ Anime6B",
+        "visible": true
+    },
+    "save_image_upscale": {
+        "value": false,
+        "visible": true
+    },
+    "save_image_hires_fix": {
+        "value": true,
+        "visible": true
+    },
+    "hiresfix_denoise": {
+        "value": 0.4,
+        "visible": true
+    },
+    "hiresfix_random_seed": {
+        "value": true,
+        "visible": true
+    },
+    "hiresfix_steps": {
+        "value": 0,
+        "visible": true
+    },
+    "hiresfix_cfg": {
+        "value": 0,
+        "visible": true
+    },
+    "redraw_mode": {
+        "value": 0,
+        "visible": true
+    },
+    "redraw_denoise": {
+        "value": 0.4,
+        "visible": true
+    },
+    "redraw_random_seed": {
+        "value": true,
+        "visible": true
+    },
+    "redraw_steps": {
+        "value": 0,
+        "visible": true
+    },
+    "redraw_cfg": {
+        "value": 0,
+        "visible": true
+    },
+    "redraw_on_hires_fix": {
+        "value": true,
+        "visible": true
+    },
+    "redraw_full_res": {
+        "value": false,
+        "visible": true
+    },
+    "tile_width": {
+        "value": 768,
+        "visible": true
+    },
+    "tile_height": {
+        "value": 0,
+        "visible": true
+    },
+    "mask_blur": {
+        "value": 8,
+        "visible": true
+    },
+    "padding": {
+        "value": 32,
+        "visible": true
+    },
+    "use_partial_prompt": {
+        "value": true,
+        "visible": true
+    },
+    "use_only_inputed_prompt": {
+        "value": false,
+        "visible": true
+    },
+    "interrogator_name": {
+        "value": "wd14-vit-v2",
+        "visible": true
+    },
+    "interrogator_threshold": {
+        "value": 0.5,
+        "visible": true
+    },
+    "interrogator_max_token": {
+        "value": "75",
+        "visible": true
+    },
+    "interrogator_add_tags": {
+        "value": "",
+        "visible": true
+    },
+    "interrogator_exclude_tags": {
+        "value": "* background,",
+        "visible": true
+    },
+    "seams_fix_type": {
+        "value": 0,
+        "visible": true
+    },
+    "seams_fix_denoise": {
+        "value": 0.3,
+        "visible": false
+    },
+    "seams_fix_width": {
+        "value": 64,
+        "visible": false
+    },
+    "seams_fix_mask_blur": {
+        "value": 8,
+        "visible": false
+    },
+    "seams_fix_padding": {
+        "value": 32,
+        "visible": false
+    },
+    "save_image_detailed": {
+        "value": true,
+        "visible": true
+    },
+    "save_image_seams_fix": {
+        "value": true,
+        "visible": true
+    },
+    "save_image_ddetailer": {
+        "value": true,
+        "visible": false
+    },
+    "dd_model_a": {
+        "value": "bbox\\mmdet_anime-face_yolov3.pth [51e1af4a]",
+        "visible": true
+    },
+    "dd_conf_a": {
+        "value": 30,
+        "visible": false
+    },
+    "dd_dilation_factor_a": {
+        "value": 4,
+        "visible": false
+    },
+    "dd_offset_x_a": {
+        "value": 0,
+        "visible": false
+    },
+    "dd_offset_y_a": {
+        "value": 0,
+        "visible": false
+    },
+    "dd_preprocess_b": {
+        "value": false,
+        "visible": false
+    },
+    "dd_bitwise_op": {
+        "value": "None",
+        "visible": false
+    },
+    "dd_model_b": {
+        "value": "None",
+        "visible": false
+    },
+    "dd_conf_b": {
+        "value": 30,
+        "visible": false
+    },
+    "dd_dilation_factor_b": {
+        "value": 4,
+        "visible": false
+    },
+    "dd_offset_x_b": {
+        "value": 0,
+        "visible": false
+    },
+    "dd_offset_y_b": {
+        "value": 0,
+        "visible": false
+    },
+    "dd_mask_blur": {
+        "value": 8,
+        "visible": false
+    },
+    "dd_denoising_strength": {
+        "value": 0.4,
+        "visible": false
+    },
+    "dd_random_seed": {
+        "value": true,
+        "visible": true
+    },
+    "dd_inpaint_full_res": {
+        "value": false,
+        "visible": false
+    },
+    "dd_inpaint_full_res_padding": {
+        "value": 32,
+        "visible": false
+    }
+}
