@@ -1,7 +1,9 @@
 # Gix-Detailer
 
+[AUTOMATIC1111님의 WEBUI 확장입니다.](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 
-AUTOMATIC1111님의 WEBUI 확장입니다.
+이미지를 그릴 때, 각 단계별로 좁은 부분마다 세부표현을 수정해
+최상의 퀄리티로 완성하기 위한 확장입니다.
 
 - t2i, i2i 모두 지원.
 - i2i 에서 Hires.Fix 지원
@@ -10,6 +12,10 @@ AUTOMATIC1111님의 WEBUI 확장입니다.
 - 상세표현 후, 얼굴을 추가로 상세표현
 
 [Extension for SD WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
+
+When creating an image, refine the detail in each narrow part at each stage.
+This is an extension to complete with the highest quality.
+
 - Support Both t2i, i2i
 - Hires. Fix on i2i
 - Detailed representation of images divided into tiles
