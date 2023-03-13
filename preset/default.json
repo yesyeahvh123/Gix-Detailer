@@ -76,11 +76,11 @@
         "visible": true
     },
     "redraw_full_res": {
-        "value": false,
+        "value": true,
         "visible": true
     },
     "tile_width": {
-        "value": 512,
+        "value": 256,
         "visible": true
     },
     "tile_height": {
@@ -108,7 +108,7 @@
         "visible": true
     },
     "interrogator_threshold": {
-        "value": 0.5,
+        "value": 0.35,
         "visible": true
     },
     "interrogator_max_token": {
@@ -124,7 +124,7 @@
         "visible": true
     },
     "seams_fix_type": {
-        "value": 0,
+        "value": 1,
         "visible": true
     },
     "seams_fix_denoise": {
@@ -216,7 +216,7 @@
         "visible": true
     },
     "dd_inpaint_full_res": {
-        "value": false,
+        "value": true,
         "visible": false
     },
     "dd_inpaint_full_res_padding": {
