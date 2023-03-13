@@ -3,6 +3,7 @@
 [AUTOMATIC1111-WEBUI 를 위한 확장](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 
 이미지를 최상의 퀄리티로 완성하기 위한 확장입니다.
+
 이미지를 생성할 때, 각 단계별로 세부표현을 수정합니다.
 
 - t2i, i2i 모두 지원.
@@ -17,6 +18,7 @@
 [Extension for SD WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 
 This is an extension to complete with the highest quality.
+
 When generating an image, refine the detail in each narrow part at each stage.
 
 
