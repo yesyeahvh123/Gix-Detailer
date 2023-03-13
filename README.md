@@ -9,6 +9,7 @@
 - i2i 에서 Hires.Fix 지원
 - 이미지를 각 타일로 나누어 상세표현
 - 각 타일을 상세표현을 할 때, 자동으로 부분 프롬프트를 생성
+- 자동 프롬프트 생성 시 품질향상을 위한 토큰 제한
 - 상세표현 후, 얼굴을 추가로 상세표현
 
 -------
@@ -22,6 +23,7 @@ This is an extension to complete with the highest quality.
 - Hires. Fix on i2i
 - Detailed representation of images divided into tiles
 - Automatically generate partial prompts when detailing each tile
+- Token limit for quality improvement when generating automatic prompts
 - After detail processing, face is further processed in detail.
 
 ## Usage
