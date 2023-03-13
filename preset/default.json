@@ -80,7 +80,7 @@
         "visible": true
     },
     "tile_width": {
-        "value": 768,
+        "value": 512,
         "visible": true
     },
     "tile_height": {

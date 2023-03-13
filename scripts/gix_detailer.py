@@ -948,13 +948,17 @@ class GIDRedraw():
         image_sliced = image.crop(rect)
         if self.use_partial_prompt == True:
             p.prompt = self.tagger.GetPartialPrompts( image_sliced, prompt_original )            
-
-        if p.inpaint_full_res: 
-            p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
-            p.height = math.ceil((self.tile_height+self.padding) / 64) * 64     
-        else:
-            p.width = self.image_width
-            p.height = self.image_height
+        
+        #if self.redraw_full_res:
+            #p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
+            #p.height = math.ceil((self.tile_height+self.padding) / 64) * 64
+            #p.width = self.image_width
+            #p.height = self.image_height
+        #else:
+            #p.width = self.image_width
+            #p.height = self.image_height
+        p.width = self.image_width
+        p.height = self.image_height
 
         b_draw_and_paste = False
         if b_draw_and_paste:
@@ -1979,7 +1983,7 @@ class Script(scripts.Script):
                         p2.extra_generation_params["\n[ Gix Detailer - Redraw logs ]"] = "\n" + "\n".join(upscaler.redraw.logs) + "\n"
                                     
                     initial_info_redraw = processed_org.infotext(p2, 0)
-                    upscaler.save_image(initial_info_redraw, suffix="(detailer)")
+                    upscaler.save_image(initial_info_redraw, suffix="(RDetailer)")
                 
                 if disable_controlnet_during_detailup:
                     sc_controlnet_idx, sc_controlnet = self.RestoreAlwaysOnScript( p2, sc_controlnet_idx, sc_controlnet )
@@ -2170,7 +2174,7 @@ class Script(scripts.Script):
                     else:
                         p_dd.extra_generation_params["\n[ Detection detailer logs ]"] = "\n" + "\n".join(logs_dd) + "\n"
                     initial_info_dd = processed_org.infotext(p_dd, 0) 
-                    upscaler.save_image(initial_info_dd, dd_image, suffix="(ddetailer)")
+                    upscaler.save_image(initial_info_dd, dd_image, suffix="(DDetailer)")
                     result_images.insert(0, dd_image)
 
                 if disable_controlnet_during_detailup:
