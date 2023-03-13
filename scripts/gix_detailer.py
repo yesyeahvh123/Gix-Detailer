@@ -2159,9 +2159,9 @@ class Script(scripts.Script):
 
                 if disable_controlnet_during_detailup:
                     sc_controlnet_idx, sc_controlnet = self.RestoreAlwaysOnScript( p_dd, sc_controlnet_idx, sc_controlnet )
-                    
             #E. Detection Detailer =====================
-            
+            gc.collect()
+            devices.torch_gc()
         #E. For n_iter ===================================================================
 
         #===========================================================
