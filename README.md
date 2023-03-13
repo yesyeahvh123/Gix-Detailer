@@ -42,6 +42,12 @@ When generating an image, refine the detail in each narrow part at each stage.
 3. Click 'Load' Button
 4. Generate image
 
+## How it works
+![](etc/how_it_works.png)
+
+## Note
+If you like this idea, please feel free to create better performing extensions your way.
+
 ## inspired
 [MultiDiffusion](https://multidiffusion.github.io/)
 
