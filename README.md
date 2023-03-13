@@ -1,6 +1,6 @@
 # Gix-Detailer
 
-[AUTOMATIC1111님의 WEBUI 확장입니다.](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
+[AUTOMATIC1111-WEBUI 를 위한 확장입니다.](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 
 이미지를 그릴 때, 각 단계별로 좁은 부분마다 세부표현을 수정해
 최상의 퀄리티로 완성하기 위한 확장입니다.
