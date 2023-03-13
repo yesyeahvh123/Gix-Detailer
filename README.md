@@ -42,6 +42,15 @@ When generating an image, refine the detail in each narrow part at each stage.
 3. Click 'Load' Button
 4. Generate image
 
+## How it works
+![](etc/how_it_works.png)
+
+## Note
+
+이 아이디어가 마음에 든다면, 당신의 방식대로 더욱 좋은 성능의 확장을 만들어 주시길 바랍니다.
+
+If you like this idea, please feel free to create better performing extensions your way.
+
 ## inspired
 [MultiDiffusion](https://multidiffusion.github.io/)
 
