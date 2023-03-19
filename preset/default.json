@@ -79,8 +79,12 @@
         "value": true,
         "visible": true
     },
+    "redraw_fit_area": {
+        "value": false,
+        "visible": true
+    },
     "tile_width": {
-        "value": 256,
+        "value": 512,
         "visible": true
     },
     "tile_height": {
@@ -104,7 +108,7 @@
         "visible": true
     },
     "interrogator_name": {
-        "value": "wd14-vit-v2",
+        "value": "wd14-convnext-v2",
         "visible": true
     },
     "interrogator_threshold": {
@@ -121,6 +125,10 @@
     },
     "interrogator_exclude_tags": {
         "value": "* background,",
+        "visible": true
+    },
+    "interrogator_skiparea_tags": {
+        "value": "negative space,",
         "visible": true
     },
     "seams_fix_type": {

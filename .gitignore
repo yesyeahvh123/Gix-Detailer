@@ -1,2 +1,4 @@
 .vscode
 __pycache__
+preset/hires_only.json
+preset/last.json

@@ -659,6 +659,7 @@ def split_str(s: str, separator=',') -> List[str]:
 class GTokenizer:
     def __init__(self) -> None:
         self.vocabs = None
+        self.words:dict = dict()
 
     def tokenize_word(self, s:str):
         if self.vocabs is None:     
@@ -673,6 +674,10 @@ class GTokenizer:
                 key = key.replace("</w>", "")
                 self.vocabs.append(key)
 
+        #Cache token-length to dict
+        if s in self.words.keys():
+            return self.words[s]
+
         rlt = 0
         while len(s) > 0:        
             l = len(s)
@@ -682,6 +687,9 @@ class GTokenizer:
                     rlt += 1
                     s = s[i:]
                     break
+        #Add Cache token-length to dict
+        if s not in self.words.keys():
+            self.words[s] = rlt
 
         return rlt
 
@@ -691,9 +699,8 @@ class GTokenizer:
         for s in arr:
             rlt += self.tokenize_word(s)
         return rlt
-
-    def CropPrompt(self, prompt:str, max_token_size:int) -> str:
-        a_tags = prompt.strip().split(',')
+    
+    def CropPromptList(self, a_tags:list[str], max_token_size:int) -> list:
         for i , s in enumerate(a_tags):            
             a_tags[i] = s.lstrip().rstrip().replace( "_" , " ") #Remove lstrip when need spacing tag
 
@@ -706,7 +713,11 @@ class GTokenizer:
             else:
                 tokens += token_len                    
                 s_new.append(tag)
-        return ', '.join(s_new)
+        return s_new
+
+    def CropPrompt(self, prompt:str, max_token_size:int) -> str:
+        a_tags = prompt.strip().split(',')
+        return ', '.join( self.CropPromptList( a_tags , max_token_size ) )
 
 TOKENIZER:GTokenizer = GTokenizer()
 #E. Gix Tokenizer===================================================
@@ -806,11 +817,15 @@ class GIDUpscaler():
                 break
         self.scales = enumerate(scales)
 
-    def upscale(self):
-        # Log info
-        print(f"Canvas size: {self.p.width}x{self.p.height}")
-        print(f"Image size: {self.image.width}x{self.image.height}")
+    def upscale(self):        
+        if self.image.width == self.p.width and self.image.height == self.p.height:
+            print(f"Image size: {self.image.width}x{self.image.height} (Not need Upscale)")
+            return
+        
+        # Log info        
+        print(f"Image size: {self.image.width}x{self.image.height} > Upscale to {self.p.width}x{self.p.height}")
         print(f"Scale factor: {self.scale_factor}")
+
         # Check upscaler is not empty
         if self.upscaler_name == "None":
             self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
@@ -831,28 +846,29 @@ class GIDUpscaler():
         # Resize image to set values
         self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
 
-    def setup_redraw(self, redraw_mode_enum, redraw_full_res, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
-                     use_partial_prompt, tagger):
+
+    def setup_redraw(self, redraw_mode_enum, redraw_full_res, redraw_fit_area, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
+                     use_partial_prompt, tagger, skiparea_tags):
         
         self.redraw.mode = redraw_mode_enum
         self.redraw.redraw_full_res = redraw_full_res
+        self.redraw.redraw_fit_area = redraw_fit_area
         self.redraw.enabled = self.redraw.mode != GIDMode.NONE
         self.redraw.padding = padding
         self.redraw.redraw_denoise = redraw_denoise
+        self.redraw.mask_blur = mask_blur
+
         self.redraw.redraw_random_seed = redraw_random_seed
         self.redraw.redraw_steps = redraw_steps
         self.redraw.redraw_cfg = redraw_cfg
-
-        self.p.mask_blur = mask_blur
-
+        
         self.redraw.show_redraw_steps = show_redraw_steps
 
         self.redraw.use_partial_prompt = use_partial_prompt
         if use_partial_prompt:
-            self.redraw.tagger = tagger            
+            self.redraw.tagger = tagger
+            self.redraw.skiparea_tags = split_str(skiparea_tags)
             
-        
-
     def setup_seams_fix(self, padding, denoise, mask_blur, width, mode):
         self.seams_fix.padding = padding
         self.seams_fix.denoise = denoise
@@ -886,10 +902,12 @@ class GIDUpscaler():
 
 class GIDRedraw():
     def __init__(self): 
-        self.redraw_full_res = True       
+        self.redraw_full_res = True  
+        self.redraw_fit_area  = False  
         self.show_redraw_steps = False
         self.use_partial_prompt = False
         self.tagger:GIDTagger = None
+        self.skiparea_tags = []
         self.use_only_inputed_prompt = False        
         self.logs = []
         self.image_width = 0
@@ -944,22 +962,30 @@ class GIDRedraw():
 
     def draw_partial(self, image, draw, mask, xi , yi , p , prompt_original, result_images:List ):        
         rect = self.calc_rectangle(xi, yi)
-        draw.rectangle(rect, fill="white")
-
+        
         image_sliced = image.crop(rect)
         if self.use_partial_prompt == True:
-            p.prompt = self.tagger.GetPartialPrompts( image_sliced, prompt_original )            
+            arr_tag = self.tagger.GetPartialPromptList( image_sliced, prompt_original )                        
+            for sa_tag in self.skiparea_tags:
+                if sa_tag in arr_tag:
+                    s_partial_tag_for_log = ", ".join(arr_tag)
+                    s_log = f"Partial Draw Skip by tag={sa_tag} (col={xi}, row={yi}), Rect (x{rect[0]} y{rect[1]}) to (x{rect[2]}, y{rect[3]})" + "\n" + \
+                    f"Prompt={s_partial_tag_for_log}"
+                    print(s_log)
+                    self.logs.append( s_log )
+                    return image
+            
+            p.prompt = ", ".join(arr_tag)
 
-        #if self.redraw_full_res:
-            #p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
-            #p.height = math.ceil((self.tile_height+self.padding) / 64) * 64
-            #p.width = self.image_width
-            #p.height = self.image_height
-        #else:
-            #p.width = self.image_width
-            #p.height = self.image_height
-        p.width = self.image_width
-        p.height = self.image_height
+        draw.rectangle(rect, fill="white")
+
+        if self.redraw_fit_area:
+            p.width = int( rect[2] - rect[0] )
+            p.height = int( rect[3] - rect[1] )
+        else:
+            p.width = self.image_width
+            p.height = self.image_height
+
 
         b_draw_and_paste = False
         if b_draw_and_paste:
@@ -969,15 +995,7 @@ class GIDRedraw():
         else:
             p.init_images = [image]
             p.image_mask = mask
-            
-        #if p.inpaint_full_res:            
-            #p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
-            #p.height = math.ceil((self.tile_height+self.padding) / 64) * 64            
-        #else:            
-            #p.width = width
-            #p.height = height
-            #p.width = math.ceil((self.tile_width+self.padding) / 64) * 64
-            #p.height = math.ceil((self.tile_height+self.padding) / 64) * 64            
+                    
 
         if self.redraw_random_seed:
             p.seed = -1
@@ -1017,7 +1035,10 @@ class GIDRedraw():
 
     def linear_process(self, p, image, prompt_original, rows, cols, result_images):
         
+        
         p.denoising_strength = self.redraw_denoise
+        p.mask_blur = self.mask_blur
+
         if self.redraw_steps > 0:
             p.steps = self.redraw_steps
         if self.redraw_cfg > 0:
@@ -1279,6 +1300,9 @@ class GIDTagger():
         return processed_tags
     
     def GetPartialPrompts(self, image_sliced, prompt_original):
+        return ", ".join(self.GetPartialPromptList( image_sliced ,prompt_original ))
+    
+    def GetPartialPromptList(self, image_sliced, prompt_original):
         exclude = split_str(self.exclude_tags) if self.exclude_tags is not None else []
         dic_tags = self.on_interrogate(image_sliced)
         arr_tag = []
@@ -1288,12 +1312,12 @@ class GIDTagger():
                 s_ex = s_ex.strip()                    
                 if len(s_ex) < 1:
                     continue
-                if "*" in s_ex:
-                    s_ex = s_ex.replace(';', '\;').replace(')', '\)').replace('(', '\(').replace( "*" , "[a-z]+")
+                if "*" in s_ex:                    
+                    s_ex = s_ex.replace(';', '\;').replace(')', '\)').replace('(', '\(').replace('?', '\?').replace(':', '\:').replace( "*" , "[a-z]+")
                     if len(s_ex) > 0:
                         re_pattern = re.compile(s_ex , re.IGNORECASE)
                         if re_pattern.match(k) is not None :
-                            print(f"Exclude tag '{k}'")
+                            #print(f"Exclude tag '{k}'")
                             b_exclude = True
                             break    
                 elif s_ex == k:
@@ -1310,12 +1334,11 @@ class GIDTagger():
             else:
                 arr_tag.append(k)
 
-        prompt_temp = ", ".join( arr_tag )
         if self.max_token > 0:                
-            #print( f"Original prompt={prompt_temp}")
-            prompt_temp = TOKENIZER.CropPrompt( prompt_temp, self.max_token )
-            #print( f"Cropped prompt={prompt_temp}")
-        return prompt_temp
+            #print( f"Original prompt={arr_tag}")
+            arr_tag = TOKENIZER.CropPromptList( arr_tag, self.max_token )
+            #print( f"Cropped prompt={arr_tag}")
+        return arr_tag
 
 class Script(scripts.Script):
     def title(self):
@@ -1462,14 +1485,17 @@ class Script(scripts.Script):
             with FormRow(variant="compact"):
                 save_image_detailed = gr.Checkbox(label="Save image in 'Detailer' stage", value=SetV(cfg, "save_image_detailed",True))
             with FormGroup(variant="compact"):
-                redraw_on_hires_fix = gr.Checkbox(label="Detail up based on 'Hires. fix' image.", value=SetV(cfg, "redraw_on_hires_fix", True))
-                redraw_full_res = gr.Checkbox(label="Redraw inpaint at full resolution", value=SetV(cfg, "redraw_full_res", True))
+                redraw_on_hires_fix = gr.Checkbox(label="Detail-up based on 'Hires. fix' image.", value=SetV(cfg, "redraw_on_hires_fix", True))
+                redraw_full_res = gr.Checkbox(label="Inpaint at full resolution", value=SetV(cfg, "redraw_full_res", True))
+                redraw_fit_area = gr.Checkbox(label="Inpaint area fit (for Inpaint model only)", value=SetV(cfg, "redraw_fit_area", False))
             with FormRow(variant="compact"):
                 redraw_denoise = gr.Slider(label='Denoising strength', minimum=0, maximum=1, step=0.1, value=SetV(cfg, "redraw_denoise", 0.4))
                 redraw_random_seed = gr.Checkbox(label="Random seed", value=SetV(cfg, "redraw_random_seed", True))                
             with FormRow(variant="compact"):
                 redraw_steps = gr.Slider(label='Sampling steps (0 = override)', minimum=0, maximum=150, step=1, value=SetV(cfg, "redraw_steps", 0))
                 redraw_cfg = gr.Slider(label='CFG Scale (0 = override)', minimum=0, maximum=30, step=0.25, value=SetV(cfg, "redraw_cfg", 0))
+
+            gr.HTML(value="<p style='font-size:0.8em;'>" + "Note: Smaller tile sizes are better quality, but take longer." + "</p>")
             with FormRow(variant="compact"):    
                 tile_width = gr.Slider(minimum=0, maximum=2048, step=64, label='Tile width.', value=SetV(cfg, "tile_width", 768))
                 tile_height = gr.Slider(minimum=0, maximum=2048, step=64, label='Tile height.', value=SetV(cfg, "tile_height", 0))
@@ -1503,7 +1529,10 @@ class Script(scripts.Script):
             with FormRow(variant="compact"):
                 interrogator_exclude_tags = gr.Textbox(label='Exclude tags (split by comma) (* = any word)', value=SetV(cfg, "interrogator_exclude_tags", ""),
                                                     placeholder="ex) 2girls, multiple girls, white background, simple background, black background", elem_id="gix_detailer_gr_" + "interrogator_exclude_tags")
-                
+
+            with FormRow(variant="compact"):
+                interrogator_skiparea_tags = gr.Textbox(label='Skip Dedraw if one of these tags detected (split by comma)', value=SetV(cfg, "interrogator_skiparea_tags", ""),
+                                                    placeholder="ex) negative space", elem_id="gix_detailer_gr_" + "interrogator_skiparea_tags")    
             #=============================================================
             gr.HTML(value="<p style='font-size:1.2em;font-weight: bold;'>" + "Seams fix" + "</p>")                
             with FormRow(variant="compact"):
@@ -1625,6 +1654,7 @@ class Script(scripts.Script):
         
         self.components_dict["redraw_on_hires_fix"] = redraw_on_hires_fix 
         self.components_dict["redraw_full_res"] = redraw_full_res
+        self.components_dict["redraw_fit_area"] = redraw_fit_area
         self.components_dict["tile_width"] =  tile_width                          
         self.components_dict["tile_height"] = tile_height                        
         self.components_dict["mask_blur"] = mask_blur                        
@@ -1637,6 +1667,8 @@ class Script(scripts.Script):
         self.components_dict["interrogator_max_token"] =  interrogator_max_token
         self.components_dict["interrogator_add_tags"] =  interrogator_add_tags         
         self.components_dict["interrogator_exclude_tags"] =  interrogator_exclude_tags         
+        self.components_dict["interrogator_skiparea_tags"] =  interrogator_skiparea_tags         
+        
         self.components_dict["seams_fix_type"] = seams_fix_type                
         self.components_dict["seams_fix_denoise"] =  seams_fix_denoise           
         self.components_dict["seams_fix_width"] = seams_fix_width               
@@ -1708,18 +1740,21 @@ class Script(scripts.Script):
         
         temp_cps_in_hires_n_redraw = [redraw_mode,save_image_hires_fix, redraw_on_hires_fix]
         temp_cps_out_hires_n_redraw = [hiresfix_denoise, hiresfix_random_seed, hiresfix_steps, hiresfix_cfg, 
-                     save_image_detailed, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, redraw_on_hires_fix, redraw_full_res, tile_width, tile_height, mask_blur, padding, show_redraw_steps]
+                     save_image_detailed, redraw_denoise, redraw_random_seed, redraw_steps, 
+                     redraw_cfg, redraw_on_hires_fix, redraw_full_res, redraw_fit_area, 
+                     tile_width, tile_height, mask_blur, padding, 
+                     show_redraw_steps]
 
         redraw_mode.change( fn=change_redraw_views, inputs=temp_cps_in_hires_n_redraw, outputs=temp_cps_out_hires_n_redraw )
         save_image_hires_fix.change( fn=change_redraw_views, inputs=temp_cps_in_hires_n_redraw, outputs=temp_cps_out_hires_n_redraw )
         redraw_on_hires_fix.change( fn=change_redraw_views, inputs=temp_cps_in_hires_n_redraw, outputs=temp_cps_out_hires_n_redraw )
         #===============================
         def change_use_partial_prompt(v):
-            return [gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v)]
+            return [gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v), gr.update(visible=v)]
 
         use_partial_prompt.change(
             fn=change_use_partial_prompt, inputs=use_partial_prompt,
-            outputs=[use_only_inputed_prompt, interrogator_name, interrogator_threshold, interrogator_max_token, interrogator_add_tags, interrogator_exclude_tags ])
+            outputs=[use_only_inputed_prompt, interrogator_name, interrogator_threshold, interrogator_max_token, interrogator_add_tags, interrogator_exclude_tags, interrogator_skiparea_tags ])
         #===============================
         def select_fix_type(fix_index):
             all_visible = fix_index != 0
@@ -1761,8 +1796,8 @@ class Script(scripts.Script):
             disable_controlnet_during_detailup, show_redraw_steps,
             target_size_type, custom_width, custom_height, custom_scale, upscaler_name, save_image_upscale,
             save_image_hires_fix, hiresfix_denoise, hiresfix_random_seed, hiresfix_steps, hiresfix_cfg,
-            redraw_mode, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, redraw_on_hires_fix, redraw_full_res, tile_width, tile_height, mask_blur, padding, 
-            use_partial_prompt, use_only_inputed_prompt, interrogator_name, interrogator_threshold, interrogator_max_token, interrogator_add_tags, interrogator_exclude_tags,
+            redraw_mode, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, redraw_on_hires_fix, redraw_full_res, redraw_fit_area, tile_width, tile_height, mask_blur, padding, 
+            use_partial_prompt, use_only_inputed_prompt, interrogator_name, interrogator_threshold, interrogator_max_token, interrogator_add_tags, interrogator_exclude_tags, interrogator_skiparea_tags,
             seams_fix_type, seams_fix_denoise, seams_fix_width, seams_fix_mask_blur, seams_fix_padding,
             save_image_detailed, save_image_seams_fix, 
             save_image_ddetailer, dd_model_a, dd_conf_a, dd_dilation_factor_a, dd_offset_x_a, dd_offset_y_a, dd_preprocess_b, dd_bitwise_op, dd_model_b, dd_conf_b, dd_dilation_factor_b, dd_offset_x_b, dd_offset_y_b, dd_mask_blur, dd_denoising_strength, dd_random_seed, dd_inpaint_full_res, dd_inpaint_full_res_padding):
@@ -1826,8 +1861,7 @@ class Script(scripts.Script):
                 print(f"Draw t2i. Prompt={org_p.prompt}")
                 processed_org = processing.process_images(org_p)
                 if (len(processed_org.images) > 0):
-                    init_img = processed_org.images[0]
-                
+                    init_img = processed_org.images[0]                    
                 p2 = StableDiffusionProcessingImg2Img(
                     init_images = None, resize_mode = 0, mask = None,
                     mask_blur= mask_blur,
@@ -1840,9 +1874,12 @@ class Script(scripts.Script):
                 print(f"Draw i2i. Prompt={org_p.prompt}")
                 processed_org = processing.process_images(org_p)
                 if (len(processed_org.images) > 0):
-                    init_img = processed_org.images[0]
+                    init_img = processed_org.images[0]                    
                 p2 = copy.copy(org_p) #Copy All setting from original setting
             
+            for img in reversed(processed_org.images):
+                result_images.insert(0, img)
+
             gc.collect()
             devices.torch_gc()
             #E. Run t2i or i2i by default ==================================================
@@ -1879,8 +1916,8 @@ class Script(scripts.Script):
             # E. Upscaling=============================================================
 
             redraw_mode_enum = GIDMode(redraw_mode)
-            upscaler.setup_redraw(redraw_mode_enum, redraw_full_res, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
-                                  use_partial_prompt, tagger)
+            upscaler.setup_redraw(redraw_mode_enum, redraw_full_res, redraw_fit_area, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
+                                  use_partial_prompt, tagger, interrogator_skiparea_tags)
             upscaler.setup_seams_fix(seams_fix_padding, seams_fix_denoise, seams_fix_mask_blur, seams_fix_width, seams_fix_type)
             upscaler.print_info()                
             
@@ -2079,7 +2116,8 @@ class Script(scripts.Script):
                             p_dd.seed = processed_dd.seed + 1
                             p_dd.init_images = processed_dd.images
 
-                            s_log = f"D-Detailer. Rect (x{crop_region[0]} y{crop_region[1]}) to (x{crop_region[2]}, y{crop_region[3]}),\n" + \
+                            s_log = f"D-Detailer. Rect (x{crop_region[0]} y{crop_region[1]}) to (x{crop_region[2]}, y{crop_region[3]}) " + \
+                                f"(size={int(crop_region[2] - crop_region[0])}x{int(crop_region[3] - crop_region[1])}),\n" + \
                                 f"seed : {p_dd.seed} , subseed : {p_dd.subseed}, steps : {p_dd.steps}, cfg : {p_dd.cfg_scale}  \n" + \
                                 f"Prompt={p_dd.prompt}"
                             logs_dd.append(s_log)
@@ -2156,9 +2194,10 @@ class Script(scripts.Script):
                             processed_dd = processing.process_images(p_dd)
                             p_dd.seed = processed_dd.seed + 1
                             p_dd.init_images = processed_dd.images
-
-                            s_log = f"D-Detailer. Rect (x{crop_region[0]} y{crop_region[1]}) to (x{crop_region[2]}, y{crop_region[3]}),\n" + \
-                                f"seed : {p_dd.seed} , subseed : {p_dd.subseed}, steps : {p_dd.steps}, cfg : {p_dd.cfg_scale}  \n" + \
+                            
+                            s_log = f"D-Detailer. Rect (x{crop_region[0]} y{crop_region[1]}) to (x{crop_region[2]}, y{crop_region[3]}) " + \
+                                f"(size={int(crop_region[2] - crop_region[0])}x{int(crop_region[3] - crop_region[1])}),\n" + \
+                                f"seed : {p_dd.seed} , subseed : {p_dd.subseed}, steps : {p_dd.steps}, cfg : {p_dd.cfg_scale} \n" + \
                                 f"Prompt={p_dd.prompt}"
                             logs_dd.append(s_log)
 
