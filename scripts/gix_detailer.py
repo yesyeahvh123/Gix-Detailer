@@ -819,8 +819,8 @@ class GIDUpscaler():
 
     def upscale(self):        
         if self.image.width == self.p.width and self.image.height == self.p.height:
-            print(f"Image size: {self.image.width}x{self.image.height} (Not need Upscale)")
-            return
+            print(f"Image size: {self.image.width}x{self.image.height} (No Upscale)")
+            return False
         
         # Log info        
         print(f"Image size: {self.image.width}x{self.image.height} > Upscale to {self.p.width}x{self.p.height}")
@@ -829,7 +829,7 @@ class GIDUpscaler():
         # Check upscaler is not empty
         if self.upscaler_name == "None":
             self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
-            return
+            return True
         
         arr_upscales = list(filter(lambda u: u.name == self.upscaler_name, shared.sd_upscalers))
         upscaler = arr_upscales[0] if len(arr_upscales) > 0 else None
@@ -845,6 +845,7 @@ class GIDUpscaler():
                 self.image = upscaler.scaler.upscale(self.image, value, upscaler.data_path)
         # Resize image to set values
         self.image = self.image.resize((self.p.width, self.p.height), resample=Image.LANCZOS)
+        return True
 
 
     def setup_redraw(self, redraw_mode_enum, redraw_full_res, redraw_fit_area, padding, mask_blur, redraw_denoise, redraw_random_seed, redraw_steps, redraw_cfg, show_redraw_steps, 
@@ -1412,7 +1413,8 @@ class Script(scripts.Script):
         target_size_types = [
             "From img2img2 settings",
             "Custom size",
-            "Scale from image size"
+            "Scale from image size",
+            "No upscale"
         ]
 
         redraw_modes = [ "Linear", "Chess", "None" ]
@@ -1714,17 +1716,19 @@ class Script(scripts.Script):
         )
         #===============================
         def change_target_size_type(scale_index):
+            no_upscale = scale_index == 3
             is_custom_size = scale_index == 1
             is_custom_scale = scale_index == 2
-
-            return [gr.update(visible=is_custom_size),
-                    gr.update(visible=is_custom_size),
-                    gr.update(visible=is_custom_scale)]
-
+            if no_upscale:
+                return [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)]
+            else:
+                return [gr.update(visible=is_custom_size), gr.update(visible=is_custom_size), gr.update(visible=is_custom_scale), gr.update(visible=True), gr.update(visible=True)]
+                
+            
         target_size_type.change(
             fn=change_target_size_type,
             inputs=target_size_type,
-            outputs=[custom_width, custom_height, custom_scale]
+            outputs=[custom_width, custom_height, custom_scale, upscaler_name, save_image_upscale]
         )
         #===============================        
         def change_redraw_views(v_redraw_mode , v_save_image_hires_fix, v_redraw_on_hires_fix):
@@ -1897,6 +1901,9 @@ class Script(scripts.Script):
             if target_size_type == 2:
                 p2.width = math.ceil((init_img.width * custom_scale) / 64) * 64
                 p2.height = math.ceil((init_img.height * custom_scale) / 64) * 64
+            if target_size_type == 3:
+                p2.width = init_img.width
+                p2.height = init_img.height
 
             # S. Upscaling=============================================================
             state.job = "Upscaling"
@@ -1904,12 +1911,12 @@ class Script(scripts.Script):
             #Add upscaled image to list
             if show_redraw_steps:
                 result_images = processed_org.images + result_images
-            upscaler.upscale()
-
-            if show_redraw_steps or save_image_upscale:
-                result_images.insert(0, upscaler.image )
-            if save_image_upscale:
-                upscaler.save_image( processed_org.infotext(org_p, 0), suffix="(upscale)" )
+            
+            if upscaler.upscale() == True:
+                if show_redraw_steps or save_image_upscale:
+                    result_images.insert(0, upscaler.image )
+                if save_image_upscale:
+                    upscaler.save_image( processed_org.infotext(org_p, 0), suffix="(upscale)" )
             
             gc.collect()
             devices.torch_gc()

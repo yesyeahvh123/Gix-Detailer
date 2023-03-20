@@ -124,7 +124,7 @@
         "visible": true
     },
     "interrogator_exclude_tags": {
-        "value": "* background,",
+        "value": "* background, virtual youtuber, * (creature),",
         "visible": true
     },
     "interrogator_skiparea_tags": {
