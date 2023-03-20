@@ -8,7 +8,7 @@
         "visible": true
     },
     "target_size_type": {
-        "value": 2,
+        "value": 3,
         "visible": true
     },
     "custom_width": {
@@ -32,7 +32,7 @@
         "visible": true
     },
     "save_image_hires_fix": {
-        "value": true,
+        "value": false,
         "visible": true
     },
     "hiresfix_denoise": {
@@ -52,7 +52,7 @@
         "visible": true
     },
     "redraw_mode": {
-        "value": 0,
+        "value": 2,
         "visible": true
     },
     "redraw_denoise": {
@@ -100,7 +100,7 @@
         "visible": true
     },
     "use_partial_prompt": {
-        "value": true,
+        "value": false,
         "visible": true
     },
     "use_only_inputed_prompt": {
@@ -156,7 +156,7 @@
         "visible": true
     },
     "save_image_seams_fix": {
-        "value": true,
+        "value": false,
         "visible": true
     },
     "save_image_ddetailer": {
@@ -164,7 +164,7 @@
         "visible": false
     },
     "dd_model_a": {
-        "value": "bbox\\mmdet_anime-face_yolov3.pth [51e1af4a]",
+        "value": "bbox/mmdet_anime-face_yolov3.pth [51e1af4a]",
         "visible": true
     },
     "dd_conf_a": {
@@ -216,11 +216,11 @@
         "visible": false
     },
     "dd_denoising_strength": {
-        "value": 0.4,
+        "value": 0.15,
         "visible": false
     },
     "dd_random_seed": {
-        "value": true,
+        "value": false,
         "visible": true
     },
     "dd_inpaint_full_res": {
